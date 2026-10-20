@@ -69,10 +69,10 @@ claude plugin marketplace add andrealencarz/aisa-geo-oxylabs
 ```
 
 ```bash
-claude plugin install aisa-geo-oxylabs@aisa-geo
+claude plugin install aisa-geo-oxylabs@aisa-geo --config aisa_api_key=sk-aisa-SUA-CHAVE
 ```
 
-Instalando assim, o Claude Code pode não pedir a chave. Nesse caso, siga a opção B de "A chave não foi pedida" em [Problemas comuns](#problemas-comuns).
+Troque `sk-aisa-SUA-CHAVE` pela sua chave. Se instalar sem o `--config`, a chave fica pendente: configure depois pela opção A de "A chave não foi pedida" em [Problemas comuns](#problemas-comuns).
 </details>
 
 <details>
@@ -142,7 +142,10 @@ Consultar a configuração, cotar e acompanhar jobs é gratuito.
 A chave não chegou ao plugin. Use uma das opções abaixo.
 
 **A chave não foi pedida na instalação**
-- **Opção A:** no Claude Code, digite `/plugin`, abra **aisa-geo-oxylabs** e escolha a opção de configurar. Cole a chave e reinicie o Claude Code.
+- **Opção A:** no Claude Code, digite o comando abaixo, cole a chave quando ele pedir e reinicie o Claude Code.
+  ```
+  /plugin configure aisa-geo-oxylabs@aisa-geo
+  ```
 - **Opção B:** salve a chave num arquivo que o plugin lê sozinho. No Mac ou Linux, rode no terminal (troque pela sua chave):
   ```bash
   echo "sk-aisa-SUA-CHAVE" > ~/.aisa_api_key
