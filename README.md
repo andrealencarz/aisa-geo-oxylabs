@@ -34,15 +34,21 @@ As perguntas são feitas pelo **Oxylabs**, que captura a resposta da interface d
 
 ## Cadastrar a chave da AIsa (vale para todos)
 
-Depois de instalar, em qualquer conversa, escreva:
+O plugin tem uma **tela de configuração** própria, que abre no seu navegador:
+
+![Tela de configuração](docs/tela-configuracao.png)
+
+Ela abre sozinha na primeira vez que você usar o plugin sem chave. Para abrir quando quiser (para cadastrar ou trocar a chave), escreva no chat:
 
 ```
-configure minha chave da AIsa: sk-aisa-COLE-SUA-CHAVE-AQUI
+abra a configuração do plugin GEO
 ```
 
-O Claude testa a chave na AIsa e, se ela for aceita, guarda no seu computador (arquivo `.aisa_api_key` na sua pasta pessoal, que só o seu usuário lê). Não precisa repetir nas próximas conversas. Para trocar de chave, é só mandar a mesma mensagem com a chave nova.
+Na tela, cole a chave, clique em **Salvar e testar** e volte ao Claude. A tela testa a chave na AIsa e, se for aceita, guarda no seu computador (arquivo `.aisa_api_key` na sua pasta pessoal, que só o seu usuário lê). Não precisa repetir nas próximas conversas.
 
-Se você esquecer, tudo bem: na primeira vez que pedir um relatório, o Claude percebe que falta a chave e pede para você colar.
+> A tela roda só no seu computador (endereço `127.0.0.1`) e o link vale por 15 minutos. Se o navegador não abrir sozinho, o Claude mostra o link para você clicar.
+
+Prefere não sair do chat? Também funciona colar direto: `configure minha chave da AIsa: sk-aisa-...`
 
 ---
 
@@ -75,9 +81,9 @@ O Claude segue o roteiro da extensão: propõe as perguntas, mostra o custo, esp
 
 **Atualizar:** baixe o arquivo do link acima de novo e instale por cima. A chave continua salva.
 
-**Trocar a chave:** mande no chat `configure minha chave da AIsa: sk-aisa-...` com a chave nova.
+**Trocar a chave:** escreva no chat `abra a configuração do plugin GEO`.
 
-> **Instalou pela tela Personalização → Plugins do app?** Essa tela não mostra campo para a chave. Instale normalmente e [cadastre a chave pelo chat](#cadastrar-a-chave-da-aisa-vale-para-todos).
+> **Instalou pela tela Personalização → Plugins do app?** Essa tela do app não tem campo para a chave. Use a [tela de configuração do plugin](#cadastrar-a-chave-da-aisa-vale-para-todos).
 
 ---
 
@@ -160,7 +166,7 @@ o plugin GEO não está funcionando, siga a seção de problemas do https://gith
 
 | Aviso | O que significa | Como resolver |
 |---|---|---|
-| "Chave da AIsa não configurada" | Falta cadastrar a chave | Mande no chat: `configure minha chave da AIsa: sk-aisa-...` |
+| "Chave da AIsa não configurada" | Falta cadastrar a chave | Escreva no chat: `abra a configuração do plugin GEO` |
 | "A AIsa recusou a chave" | Chave copiada pela metade ou apagada | Gere outra em [console.aisa.one](https://console.aisa.one) e peça ao Claude para trocar |
 | "Chave válida, mas sem saldo" | Faltam créditos | Adicione créditos em [console.aisa.one](https://console.aisa.one) |
 | O Claude não acha as ferramentas do plugin | A sessão começou antes da instalação, ou falta Python | Abra uma sessão nova. Se continuar, peça ao Claude para conferir o Python |
@@ -242,6 +248,7 @@ Você ──► Claude Code ──► skill /relatorio-geo (roteiro do relatóri
 
 | Ferramenta | O que faz | Custo |
 |---|---|---|
+| `abrir_configuracao` | Abre no navegador a tela para colar e salvar a chave | grátis |
 | `configurar_chave_aisa` | Testa e salva a chave da AIsa colada no chat | grátis |
 | `verificar_configuracao` | Confere a chave e o acesso à AIsa | grátis |
 | `geo_visibilidade` | Faz um lote de perguntas a várias IAs em paralelo, mede a presença de cada marca e salva o JSON | por pergunta |

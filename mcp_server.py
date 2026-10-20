@@ -14,13 +14,18 @@ import time
 import uuid
 import unicodedata
 import traceback
+import secrets
+import platform
+import threading
+import subprocess
 import urllib.request
 import urllib.error
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 SERVER_NAME = "aisa-oxylabs"
-SERVER_VERSION = "0.4.0"
+SERVER_VERSION = "0.5.0"
 PROTOCOL_VERSION = "2025-06-18"
 
 API_BASE = os.environ.get("AISA_API_BASE", "https://api.aisa.one").rstrip("/")
@@ -31,8 +36,10 @@ FINAL_STATUSES = ("completed", "failed", "cancelled")
 SERVER_INSTRUCTIONS = (
     "Use estas ferramentas quando o usuário quiser saber o que ChatGPT, Gemini ou Perplexity "
     "respondem para uma pergunta, ou medir a presença de uma marca/empresa nas respostas de IA (GEO). "
-    "Na primeira vez da conversa, chame 'verificar_configuracao'; se a chave da AIsa não estiver configurada, "
-    "peça a chave ao usuário e chame 'configurar_chave_aisa'. Para relatórios com várias perguntas e concorrentes, use 'geo_visibilidade'. Antes de rodar lotes "
+    "Na primeira vez da conversa, chame 'verificar_configuracao'. Se a chave da AIsa não estiver configurada, "
+    "a tela de configuração abre sozinha no navegador: avise o usuário, passe o link 'url' e espere ele salvar. "
+    "Para configurar ou trocar a chave a pedido do usuário, chame 'abrir_configuracao'. Se o usuário colar a "
+    "chave no chat, use 'configurar_chave_aisa'. Para relatórios com várias perguntas e concorrentes, use 'geo_visibilidade'. Antes de rodar lotes "
     "grandes, use 'oxylabs_llm_cotar' e informe o custo ao usuário. Cada pergunta é cobrada na conta AIsa."
 )
 
@@ -40,10 +47,9 @@ SERVER_INSTRUCTIONS = (
 # --------------------------------------------------------------------------- API AIsa
 
 KEY_FILE = os.path.join(os.path.expanduser("~"), ".aisa_api_key")
-MISSING_KEY = (
-    "Chave da AIsa não configurada. Peça a chave ao usuário (começa com sk-aisa-, criada em "
-    "console.aisa.one) e chame a ferramenta 'configurar_chave_aisa'."
-)
+MISSING_KEY = "Chave da AIsa não configurada."
+CONFIG_HTML = os.path.join(os.path.dirname(os.path.abspath(__file__)), "extensao", "server", "config.html")
+CONFIG_TTL_S = 900
 _key_override = None
 
 
@@ -74,9 +80,103 @@ def save_key(key):
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write(key + "\n")
     result["salva_em"] = KEY_FILE
+    result["chave"] = _mask(key)
     if result.get("ok"):
         result["mensagem"] = "Chave salva e aceita pela AIsa. Não precisa configurar de novo."
     return result
+
+
+def _mask(key):
+    return key[:8] + "…" + key[-4:] if len(key) > 16 else "(curta demais)"
+
+
+# --------------------------------------------------------------------------- Tela de configuração
+
+_config = {"server": None, "url": None}
+
+
+def _open_browser(url):
+    system = platform.system()
+    if system == "Darwin":
+        cmd = ["open", url]
+    elif system == "Windows":
+        cmd = ["cmd", "/c", "start", "", url]
+    else:
+        cmd = ["xdg-open", url]
+    try:
+        subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except OSError:
+        return False
+
+
+class _ConfigHandler(BaseHTTPRequestHandler):
+    token = ""
+
+    def log_message(self, *args):
+        pass  # stdout é do protocolo MCP
+
+    def _send(self, code, body, ctype="application/json; charset=utf-8"):
+        data = body.encode("utf-8") if isinstance(body, str) else body
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        base = "/" + self.token
+        if self.path in (base, base + "/"):
+            with open(CONFIG_HTML, encoding="utf-8") as f:
+                self._send(200, f.read(), "text/html; charset=utf-8")
+        elif self.path == base + "/status":
+            try:
+                status = {"configurada": True, "chave": _mask(_api_key())}
+            except RuntimeError:
+                status = {"configurada": False}
+            self._send(200, json.dumps(status, ensure_ascii=False))
+        else:
+            self._send(404, "{}")
+
+    def do_POST(self):
+        if self.path != "/" + self.token + "/salvar":
+            return self._send(404, "{}")
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            chave = json.loads(self.rfile.read(length) or b"{}").get("chave", "")
+            result = save_key(chave)
+        except Exception as e:
+            result = {"ok": False, "problema": str(e)}
+        result.pop("detalhe", None)
+        self._send(200, json.dumps(result, ensure_ascii=False))
+
+
+def open_config_page():
+    """Abre no navegador uma página local para colar a chave da AIsa."""
+    if _config["server"] is None:
+        token = secrets.token_urlsafe(16)
+        handler = type("Handler", (_ConfigHandler,), {"token": token})
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+
+        def close():
+            server.shutdown()
+            server.server_close()
+            _config.update(server=None, url=None)
+
+        timer = threading.Timer(CONFIG_TTL_S, close)
+        timer.daemon = True
+        timer.start()
+        _config.update(server=server, url="http://127.0.0.1:%d/%s" % (server.server_address[1], token))
+    opened = _open_browser(_config["url"])
+    return {
+        "ok": True,
+        "url": _config["url"],
+        "aberta_no_navegador": opened,
+        "mensagem": "Abri a tela de configuração no navegador. Cole a chave da AIsa, clique em 'Salvar e testar' "
+                    "e volte aqui. Se a página não abriu, use o link. Ele vale por 15 minutos.",
+    }
 
 
 def _request(method, path, body=None, headers=None, timeout=60):
@@ -331,6 +431,11 @@ GEO_SCHEMA = {"type": "string", "description": "Localização do usuário simula
 
 TOOLS = [
     {
+        "name": "abrir_configuracao",
+        "description": "Abre no navegador a tela de configuração do plugin, onde o usuário cola a chave da AIsa e salva. Use quando o usuário pedir para configurar, cadastrar ou trocar a chave.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "configurar_chave_aisa",
         "description": "Cadastra a chave da API AIsa do usuário (começa com sk-aisa-): testa na AIsa e guarda no computador para as próximas conversas. Use quando a chave não estiver configurada ou o usuário quiser trocá-la.",
         "inputSchema": {
@@ -432,8 +537,8 @@ def check_setup():
     try:
         key = _api_key()
     except RuntimeError as e:
-        return info | {"ok": False, "problema": str(e)}
-    info["chave"] = key[:8] + "…" + key[-4:] if len(key) > 16 else "(curta demais)"
+        return info | {"ok": False, "problema": str(e), "tela_de_configuracao": open_config_page()}
+    info["chave"] = _mask(key)
     try:
         list_jobs(limit=1)
     except RuntimeError as e:
@@ -449,10 +554,20 @@ def check_setup():
 
 
 def call_tool(name, args):
+    if name == "abrir_configuracao":
+        return open_config_page()
     if name == "configurar_chave_aisa":
         return save_key(args.get("chave"))
     if name == "verificar_configuracao":
         return check_setup()
+    try:
+        _api_key()
+    except RuntimeError as e:
+        return {"ok": False, "problema": str(e), "tela_de_configuracao": open_config_page()}
+    return _call_api_tool(name, args)
+
+
+def _call_api_tool(name, args):
     if name == "oxylabs_llm_perguntar":
         job = wait_job(submit(args["source"], args["prompt"], args.get("geo_location")),
                        timeout_s=int(args.get("timeout_s") or 240))

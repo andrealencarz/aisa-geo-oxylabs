@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configurar GEO · Chave da AIsa</title>
+<style>
+  :root {
+    --bg: #f4f6f7; --card: #ffffff; --ink: #172327; --muted: #5d6e72; --line: #d7e0e2;
+    --accent: #0d6b66; --accent-ink: #ffffff; --ok: #1c7c46; --ok-bg: #e3f4ea; --err: #a23a2a; --err-bg: #fbe9e5;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1719; --card: #172225; --ink: #e4ecec; --muted: #9aacaf; --line: #2b3b3e;
+      --accent: #4fbfb5; --accent-ink: #062120; --ok: #6fd39a; --ok-bg: #17321f; --err: #f29b8a; --err-bg: #3a1d18;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px 16px; }
+  main { width: 100%; max-width: 480px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 28px; display: flex; flex-direction: column; gap: 18px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  h1 { margin: 0; font-size: 22px; line-height: 1.25; }
+  p { margin: 0; color: var(--muted); }
+  a { color: var(--accent); }
+  label { font-weight: 600; display: block; margin-bottom: 6px; }
+  .field { display: flex; gap: 8px; }
+  input { flex: 1; min-width: 0; font: 15px ui-monospace, Menlo, Consolas, monospace; padding: 11px 12px; border-radius: 8px;
+          border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); padding: 10px 12px; cursor: pointer; }
+  button.primary { width: 100%; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; padding: 12px; }
+  button:disabled { opacity: .6; cursor: progress; }
+  .status { border-radius: 8px; padding: 12px 14px; font-size: 15px; }
+  .status.ok { background: var(--ok-bg); color: var(--ok); }
+  .status.err { background: var(--err-bg); color: var(--err); }
+  .status.info { border: 1px solid var(--line); color: var(--muted); }
+  ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <div class="eyebrow">Plugin GEO · Oxylabs via AIsa</div>
+    <h1>Chave da API AIsa</h1>
+  </div>
+
+  <div id="current" class="status info">Verificando a configuração atual…</div>
+
+  <form id="form" autocomplete="off">
+    <label for="chave">Cole a sua chave</label>
+    <div class="field">
+      <input id="chave" name="chave" type="password" placeholder="sk-aisa-…" spellcheck="false" required>
+      <button type="button" id="toggle" aria-label="Mostrar a chave">Mostrar</button>
+    </div>
+  </form>
+
+  <button class="primary" id="save" type="submit" form="form">Salvar e testar</button>
+
+  <div id="result" class="status" role="status" hidden></div>
+
+  <ol>
+    <li>Ainda não tem chave? Crie em <a href="https://console.aisa.one/sign-up" target="_blank" rel="noopener">console.aisa.one</a> e adicione créditos.</li>
+    <li>A chave fica salva só neste computador (arquivo <code>.aisa_api_key</code> na sua pasta pessoal).</li>
+    <li>Depois de salvar, feche esta aba e volte ao Claude.</li>
+  </ol>
+</main>
+<script>
+  const base = location.pathname.replace(/\/$/, "");
+  const $ = (id) => document.getElementById(id);
+
+  fetch(base + "/status").then((r) => r.json()).then((s) => {
+    $("current").textContent = s.configurada
+      ? "Chave atual: " + s.chave + ". Para trocar, cole a nova abaixo."
+      : "Nenhuma chave configurada ainda.";
+  }).catch(() => { $("current").textContent = "Não consegui ler a configuração atual."; });
+
+  $("toggle").addEventListener("click", () => {
+    const show = $("chave").type === "password";
+    $("chave").type = show ? "text" : "password";
+    $("toggle").textContent = show ? "Ocultar" : "Mostrar";
+  });
+
+  $("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const box = $("result");
+    $("save").disabled = true;
+    $("save").textContent = "Testando na AIsa…";
+    box.hidden = true;
+    try {
+      const r = await fetch(base + "/salvar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chave: $("chave").value }),
+      });
+      const res = await r.json();
+      box.className = "status " + (res.ok ? "ok" : "err");
+      box.textContent = res.ok
+        ? "✔ Chave salva e aceita pela AIsa. Pode fechar esta aba e voltar ao Claude."
+        : "✖ " + (res.problema || "Não deu certo.") + (res.salva_em ? " A chave foi salva mesmo assim." : "");
+      if (res.ok) { $("chave").value = ""; $("current").textContent = "Chave atual: " + (res.chave || "configurada") + "."; }
+    } catch (err) {
+      box.className = "status err";
+      box.textContent = "✖ A página perdeu a conexão com o plugin. Peça ao Claude para abrir a configuração de novo.";
+    }
+    box.hidden = false;
+    $("save").disabled = false;
+    $("save").textContent = "Salvar e testar";
+  });
+</script>
+</body>
+</html>

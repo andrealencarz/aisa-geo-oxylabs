@@ -12,10 +12,12 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
+const http = require("http");
 const readline = require("readline");
+const { spawn } = require("child_process");
 
 const SERVER_NAME = "aisa-oxylabs";
-const SERVER_VERSION = "0.4.0";
+const SERVER_VERSION = "0.5.0";
 const PROTOCOL_VERSION = "2025-06-18";
 
 const API_BASE = (process.env.AISA_API_BASE || "https://api.aisa.one").replace(/\/+$/, "");
@@ -23,16 +25,18 @@ const LLM_PATH = "/apis/v1/oxylabs/llm";
 const SOURCES = ["chatgpt", "gemini", "perplexity"];
 const FINAL_STATUSES = ["completed", "failed", "cancelled"];
 const KEY_FILE = path.join(os.homedir(), ".aisa_api_key");
-const MISSING_KEY =
-  "Chave da AIsa não configurada. Peça a chave ao usuário (começa com sk-aisa-, criada em console.aisa.one) " +
-  "e chame a ferramenta 'configurar_chave_aisa'.";
+const MISSING_KEY = "Chave da AIsa não configurada.";
+const CONFIG_HTML = path.join(__dirname, "config.html");
+const CONFIG_TTL_MS = 15 * 60 * 1000;
 let keyOverride = null;
 
 const SERVER_INSTRUCTIONS =
   "Use estas ferramentas quando o usuário quiser saber o que ChatGPT, Gemini ou Perplexity respondem " +
   "para uma pergunta, ou medir a presença de uma marca/empresa nas respostas de IA (GEO). " +
-  "Na primeira vez da conversa, chame 'verificar_configuracao'; se a chave da AIsa não estiver configurada, " +
-  "peça a chave ao usuário e chame 'configurar_chave_aisa'. Para relatórios com várias perguntas e " +
+  "Na primeira vez da conversa, chame 'verificar_configuracao'. Se a chave da AIsa não estiver configurada, " +
+  "a tela de configuração abre sozinha no navegador: avise o usuário, passe o link 'url' e espere ele salvar. " +
+  "Para configurar ou trocar a chave a pedido do usuário, chame 'abrir_configuracao'. Se o usuário colar a " +
+  "chave no chat, use 'configurar_chave_aisa'. Para relatórios com várias perguntas e " +
   "concorrentes, siga o prompt 'relatorio-geo' e use 'geo_visibilidade'. Antes de lotes grandes, use " +
   "'oxylabs_llm_cotar' e informe o custo ao usuário. Cada pergunta é cobrada na conta AIsa do usuário.";
 
@@ -46,6 +50,84 @@ function apiKey() {
   }
   if (!key || key.startsWith("${")) throw new Error(MISSING_KEY);
   return key;
+}
+
+const maskKey = (key) => (key.length > 16 ? key.slice(0, 8) + "…" + key.slice(-4) : "(curta demais)");
+
+// --------------------------------------------------------------------------- Tela de configuração
+
+const configPage = { server: null, url: null };
+
+function openBrowser(url) {
+  const [cmd, args] =
+    process.platform === "darwin" ? ["open", [url]]
+    : process.platform === "win32" ? ["cmd", ["/c", "start", "", url]]
+    : ["xdg-open", [url]];
+  try {
+    spawn(cmd, args, { stdio: "ignore", detached: true }).on("error", () => {}).unref();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function sendJson(res, code, obj) {
+  const body = JSON.stringify(obj);
+  res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(body);
+}
+
+// Abre no navegador uma página local (127.0.0.1, link com token) para colar a chave da AIsa.
+async function openConfigPage() {
+  if (!configPage.server) {
+    const token = crypto.randomBytes(16).toString("base64url");
+    const base = "/" + token;
+    const server = http.createServer((req, res) => {
+      if (req.method === "GET" && (req.url === base || req.url === base + "/")) {
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+        return res.end(fs.readFileSync(CONFIG_HTML, "utf8"));
+      }
+      if (req.method === "GET" && req.url === base + "/status") {
+        try {
+          return sendJson(res, 200, { configurada: true, chave: maskKey(apiKey()) });
+        } catch {
+          return sendJson(res, 200, { configurada: false });
+        }
+      }
+      if (req.method === "POST" && req.url === base + "/salvar") {
+        let raw = "";
+        req.on("data", (c) => (raw += c));
+        req.on("end", async () => {
+          let result;
+          try {
+            result = await saveKey(JSON.parse(raw || "{}").chave);
+          } catch (e) {
+            result = { ok: false, problema: e.message };
+          }
+          delete result.detalhe;
+          sendJson(res, 200, result);
+        });
+        return;
+      }
+      sendJson(res, 404, {});
+    });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    server.unref();
+    setTimeout(() => {
+      server.close();
+      configPage.server = configPage.url = null;
+    }, CONFIG_TTL_MS).unref();
+    configPage.server = server;
+    configPage.url = `http://127.0.0.1:${server.address().port}${base}`;
+  }
+  return {
+    ok: true,
+    url: configPage.url,
+    aberta_no_navegador: openBrowser(configPage.url),
+    mensagem:
+      "Abri a tela de configuração no navegador. Cole a chave da AIsa, clique em 'Salvar e testar' e volte aqui. " +
+      "Se a página não abriu, use o link. Ele vale por 15 minutos.",
+  };
 }
 
 // Testa a chave na AIsa e, se for aceita, guarda em ~/.aisa_api_key (só o usuário lê).
@@ -63,6 +145,7 @@ async function saveKey(key) {
   }
   fs.writeFileSync(KEY_FILE, key + "\n", { encoding: "utf8", mode: 0o600 });
   result.salva_em = KEY_FILE;
+  result.chave = maskKey(key);
   if (result.ok) result.mensagem = "Chave salva e aceita pela AIsa. Não precisa configurar de novo.";
   return result;
 }
@@ -318,9 +401,9 @@ async function checkSetup() {
   try {
     key = apiKey();
   } catch (e) {
-    return { ...info, ok: false, problema: e.message };
+    return { ...info, ok: false, problema: e.message, tela_de_configuracao: await openConfigPage() };
   }
-  info.chave = key.length > 16 ? key.slice(0, 8) + "…" + key.slice(-4) : "(curta demais)";
+  info.chave = maskKey(key);
   try {
     await listJobs(undefined, 1);
   } catch (e) {
@@ -339,6 +422,11 @@ const SOURCE_SCHEMA = { type: "string", enum: SOURCES, description: "IA a consul
 const GEO_SCHEMA = { type: "string", description: "Localização do usuário simulado, ex.: 'Brazil'. Opcional." };
 
 const TOOLS = [
+  {
+    name: "abrir_configuracao",
+    description: "Abre no navegador a tela de configuração da extensão, onde o usuário cola a chave da AIsa e salva. Use quando o usuário pedir para configurar, cadastrar ou trocar a chave.",
+    inputSchema: { type: "object", properties: {} },
+  },
   {
     name: "configurar_chave_aisa",
     description: "Cadastra a chave da API AIsa do usuário (começa com sk-aisa-): testa na AIsa e guarda no computador para as próximas conversas. Use quando a chave não estiver configurada ou o usuário quiser trocá-la.",
@@ -433,10 +521,23 @@ const TOOLS = [
 
 async function callTool(name, args) {
   switch (name) {
+    case "abrir_configuracao":
+      return openConfigPage();
     case "configurar_chave_aisa":
       return saveKey(args.chave);
     case "verificar_configuracao":
       return checkSetup();
+  }
+  try {
+    apiKey();
+  } catch (e) {
+    return { ok: false, problema: e.message, tela_de_configuracao: await openConfigPage() };
+  }
+  return callApiTool(name, args);
+}
+
+async function callApiTool(name, args) {
+  switch (name) {
     case "oxylabs_llm_perguntar": {
       const job = await waitJob(await submit(args.source, args.prompt, args.geo_location), args.timeout_s || 240);
       const res = summarizeJob(job);

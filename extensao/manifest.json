@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "aisa-geo-oxylabs",
   "display_name": "GEO: o que as IAs respondem",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Pergunta ao ChatGPT, Gemini e Perplexity como um usuário real e mede quais marcas aparecem nas respostas.",
   "long_description": "Extensão de GEO (visibilidade em respostas de IA). Faz perguntas ao ChatGPT, Gemini e Perplexity pela interface de cada IA (Oxylabs, via API AIsa), mede em quantas respostas a sua empresa e os concorrentes aparecem, quem é citado primeiro e quais sites as IAs usam como fonte. Use o prompt 'Relatório GEO' para o relatório completo com plano de ação. Cada pergunta é cobrada na sua conta AIsa (cerca de US$ 0,0015).",
   "author": {
@@ -57,6 +57,10 @@
     }
   },
   "tools": [
+    {
+      "name": "abrir_configuracao",
+      "description": "Abre no navegador a tela para colar e salvar a chave da AIsa."
+    },
     {
       "name": "configurar_chave_aisa",
       "description": "Cadastra a chave da AIsa colada no chat (testa e salva no computador)."
