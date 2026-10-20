@@ -32,6 +32,20 @@ As perguntas são feitas pelo **Oxylabs**, que captura a resposta da interface d
 
 ---
 
+## Cadastrar a chave da AIsa (vale para todos)
+
+Depois de instalar, em qualquer conversa, escreva:
+
+```
+configure minha chave da AIsa: sk-aisa-COLE-SUA-CHAVE-AQUI
+```
+
+O Claude testa a chave na AIsa e, se ela for aceita, guarda no seu computador (arquivo `.aisa_api_key` na sua pasta pessoal, que só o seu usuário lê). Não precisa repetir nas próximas conversas. Para trocar de chave, é só mandar a mesma mensagem com a chave nova.
+
+Se você esquecer, tudo bem: na primeira vez que pedir um relatório, o Claude percebe que falta a chave e pede para você colar.
+
+---
+
 ## Instalar no Claude Desktop (recomendado)
 
 Não precisa de terminal nem de Python.
@@ -39,7 +53,7 @@ Não precisa de terminal nem de Python.
 1. **Baixe a extensão:** [**aisa-geo-oxylabs.mcpb**](https://github.com/andrealencarz/aisa-geo-oxylabs/releases/latest/download/aisa-geo-oxylabs.mcpb)
 2. **Dê dois cliques no arquivo baixado.** O Claude Desktop abre a tela de instalação. Clique em **Instalar**.
    - Se o arquivo não abrir no Claude: no app, vá em **Configurações → Extensões → Configurações avançadas → Instalar extensão…** e escolha o arquivo.
-3. **Cole a sua chave da AIsa** no campo **Chave da API AIsa** e salve. A pasta dos resultados já vem preenchida (`Documentos/Relatorios GEO`); só mude se quiser.
+3. **Cole a sua chave da AIsa** no campo **Chave da API AIsa** e salve. Se preferir, deixe em branco e [cadastre pelo chat](#cadastrar-a-chave-da-aisa-vale-para-todos). A pasta dos resultados já vem preenchida (`Documentos/Relatorios GEO`); só mude se quiser.
 4. Confira se a extensão está **ativada** (chave ligada) na lista de extensões.
 
 **Teste:** numa conversa nova, escreva:
@@ -61,7 +75,9 @@ O Claude segue o roteiro da extensão: propõe as perguntas, mostra o custo, esp
 
 **Atualizar:** baixe o arquivo do link acima de novo e instale por cima. A chave continua salva.
 
-**Trocar a chave:** Configurações → Extensões → GEO: o que as IAs respondem → Configurar.
+**Trocar a chave:** mande no chat `configure minha chave da AIsa: sk-aisa-...` com a chave nova.
+
+> **Instalou pela tela Personalização → Plugins do app?** Essa tela não mostra campo para a chave. Instale normalmente e [cadastre a chave pelo chat](#cadastrar-a-chave-da-aisa-vale-para-todos).
 
 ---
 
@@ -144,7 +160,7 @@ o plugin GEO não está funcionando, siga a seção de problemas do https://gith
 
 | Aviso | O que significa | Como resolver |
 |---|---|---|
-| "Chave da AIsa não configurada" | A chave não chegou ao plugin | Peça ao Claude: "troque a chave do plugin GEO" e cole a chave |
+| "Chave da AIsa não configurada" | Falta cadastrar a chave | Mande no chat: `configure minha chave da AIsa: sk-aisa-...` |
 | "A AIsa recusou a chave" | Chave copiada pela metade ou apagada | Gere outra em [console.aisa.one](https://console.aisa.one) e peça ao Claude para trocar |
 | "Chave válida, mas sem saldo" | Faltam créditos | Adicione créditos em [console.aisa.one](https://console.aisa.one) |
 | O Claude não acha as ferramentas do plugin | A sessão começou antes da instalação, ou falta Python | Abra uma sessão nova. Se continuar, peça ao Claude para conferir o Python |
@@ -226,6 +242,7 @@ Você ──► Claude Code ──► skill /relatorio-geo (roteiro do relatóri
 
 | Ferramenta | O que faz | Custo |
 |---|---|---|
+| `configurar_chave_aisa` | Testa e salva a chave da AIsa colada no chat | grátis |
 | `verificar_configuracao` | Confere a chave e o acesso à AIsa | grátis |
 | `geo_visibilidade` | Faz um lote de perguntas a várias IAs em paralelo, mede a presença de cada marca e salva o JSON | por pergunta |
 | `oxylabs_llm_perguntar` | Faz uma pergunta a uma IA e devolve a resposta e as fontes | por pergunta |

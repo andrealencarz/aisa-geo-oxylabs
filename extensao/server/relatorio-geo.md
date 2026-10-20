@@ -4,7 +4,9 @@ Monte um relatório de GEO (visibilidade em respostas de IA) usando as ferrament
 
 ## Passo a passo
 
-0. **Confira a configuração.** Chame `verificar_configuracao`. Se `ok` vier `false`, explique o `problema` em linguagem simples e pare até o usuário resolver. Para trocar a chave: Configurações → Extensões → GEO.
+0. **Confira a configuração.** Chame `verificar_configuracao`.
+   - Se a chave não estiver configurada: peça ao usuário que cole a chave da AIsa (começa com `sk-aisa-`; quem não tem cria em https://console.aisa.one/sign-up) e chame `configurar_chave_aisa` com ela. A chave fica salva no computador. Não repita a chave no chat.
+   - Se `ok` vier `false` por outro motivo, explique o `problema` em linguagem simples e pare até o usuário resolver.
 
 1. **Colete o contexto.** Pergunte só o que faltar:
    - empresa analisada (nome e site);

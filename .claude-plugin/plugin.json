@@ -1,7 +1,7 @@
 {
   "name": "aisa-geo-oxylabs",
   "displayName": "GEO: o que as IAs respondem (Oxylabs via AIsa)",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Pergunta ao ChatGPT, Gemini e Perplexity como um usuário real (Oxylabs LLM via API AIsa) e mede quais marcas aparecem nas respostas, para relatórios de GEO e comparação com concorrentes.",
   "author": {
     "name": "André Alencar",
@@ -10,12 +10,23 @@
   "homepage": "https://github.com/andrealencarz/aisa-geo-oxylabs",
   "repository": "https://github.com/andrealencarz/aisa-geo-oxylabs",
   "license": "MIT",
-  "keywords": ["geo", "seo", "chatgpt", "gemini", "perplexity", "oxylabs", "aisa", "visibilidade em ia"],
+  "keywords": [
+    "geo",
+    "seo",
+    "chatgpt",
+    "gemini",
+    "perplexity",
+    "oxylabs",
+    "aisa",
+    "visibilidade em ia"
+  ],
   "skills": "./skills/",
   "mcpServers": {
     "aisa-oxylabs": {
       "command": "python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp_server.py"],
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp_server.py"
+      ],
       "env": {
         "AISA_API_KEY": "${user_config.aisa_api_key}"
       }
@@ -25,9 +36,9 @@
     "aisa_api_key": {
       "type": "string",
       "title": "Chave da API AIsa",
-      "description": "Cole sua chave da AIsa (sk-aisa-...). Crie em https://console.aisa.one/sign-up",
+      "description": "Opcional: cole sua chave da AIsa (sk-aisa-...). Também dá para cadastrar depois, pelo chat. Crie em https://console.aisa.one/sign-up",
       "sensitive": true,
-      "required": true
+      "required": false
     }
   }
 }

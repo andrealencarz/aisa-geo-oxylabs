@@ -9,17 +9,20 @@ Mede a presença de uma empresa e dos concorrentes nas respostas do **ChatGPT**,
 
 ## Ferramentas (servidor MCP `aisa-oxylabs` deste plugin)
 
+- `configurar_chave_aisa`: testa e salva a chave da AIsa que o usuário colar no chat.
 - `verificar_configuracao`: confere se a chave da AIsa está configurada e é aceita. Gratuito.
 - `geo_visibilidade`: roda o lote inteiro (perguntas × IAs) em paralelo, salva um JSON e devolve o resumo por marca.
 - `oxylabs_llm_cotar`: cota uma pergunta sem executar. Gratuito.
 - `oxylabs_llm_perguntar`: uma pergunta a uma IA, com resposta e fontes.
 - `oxylabs_llm_job`, `oxylabs_llm_listar`, `oxylabs_llm_cancelar`: controle de jobs.
 
-Não peça a chave da AIsa ao usuário: ela vem da configuração do plugin. Se a ferramenta disser que a chave não está configurada, oriente o usuário a preenchê-la nas configurações do plugin.
+A chave da AIsa pode vir da configuração do plugin ou ser cadastrada pelo chat com `configurar_chave_aisa` (veja o passo 0).
 
 ## Passo a passo
 
-0. **Confira a configuração.** Na primeira vez da conversa, chame `verificar_configuracao`. Se `ok` vier `false`, mostre o `problema` ao usuário em linguagem simples e pare até ele resolver.
+0. **Confira a configuração.** Na primeira vez da conversa, chame `verificar_configuracao`.
+   - Se a chave não estiver configurada: peça ao usuário que cole a chave da AIsa (começa com `sk-aisa-`; quem não tem cria em https://console.aisa.one/sign-up) e chame `configurar_chave_aisa` com ela. A chave fica salva no computador; não precisa repetir nas próximas conversas. Não repita a chave no chat.
+   - Se `ok` vier `false` por outro motivo, mostre o `problema` em linguagem simples e pare até o usuário resolver.
 
 1. **Colete o contexto.** Pergunte só o que faltar:
    - empresa analisada (nome e domínio);

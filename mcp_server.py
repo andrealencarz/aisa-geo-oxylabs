@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 SERVER_NAME = "aisa-oxylabs"
-SERVER_VERSION = "0.2.0"
+SERVER_VERSION = "0.4.0"
 PROTOCOL_VERSION = "2025-06-18"
 
 API_BASE = os.environ.get("AISA_API_BASE", "https://api.aisa.one").rstrip("/")
@@ -31,7 +31,8 @@ FINAL_STATUSES = ("completed", "failed", "cancelled")
 SERVER_INSTRUCTIONS = (
     "Use estas ferramentas quando o usuário quiser saber o que ChatGPT, Gemini ou Perplexity "
     "respondem para uma pergunta, ou medir a presença de uma marca/empresa nas respostas de IA (GEO). "
-    "Para relatórios com várias perguntas e concorrentes, use 'geo_visibilidade'. Antes de rodar lotes "
+    "Na primeira vez da conversa, chame 'verificar_configuracao'; se a chave da AIsa não estiver configurada, "
+    "peça a chave ao usuário e chame 'configurar_chave_aisa'. Para relatórios com várias perguntas e concorrentes, use 'geo_visibilidade'. Antes de rodar lotes "
     "grandes, use 'oxylabs_llm_cotar' e informe o custo ao usuário. Cada pergunta é cobrada na conta AIsa."
 )
 
@@ -39,19 +40,43 @@ SERVER_INSTRUCTIONS = (
 # --------------------------------------------------------------------------- API AIsa
 
 KEY_FILE = os.path.join(os.path.expanduser("~"), ".aisa_api_key")
+MISSING_KEY = (
+    "Chave da AIsa não configurada. Peça a chave ao usuário (começa com sk-aisa-, criada em "
+    "console.aisa.one) e chame a ferramenta 'configurar_chave_aisa'."
+)
+_key_override = None
 
 
 def _api_key():
+    if _key_override:
+        return _key_override
     key = os.environ.get("AISA_API_KEY", "").strip()
     if (not key or key.startswith("${")) and os.path.isfile(KEY_FILE):
         with open(KEY_FILE, encoding="utf-8") as f:
             key = f.read().strip()
     if not key or key.startswith("${"):
-        raise RuntimeError(
-            "Chave da AIsa não configurada. Preencha a chave nas configurações do plugin "
-            "ou salve-a no arquivo %s." % KEY_FILE
-        )
+        raise RuntimeError(MISSING_KEY)
     return key
+
+
+def save_key(key):
+    """Testa a chave na AIsa e, se for aceita, guarda em ~/.aisa_api_key (só o usuário lê)."""
+    global _key_override
+    key = (key or "").strip()
+    if not key.startswith("sk-"):
+        return {"ok": False, "problema": "Isso não parece uma chave da AIsa: ela começa com sk-aisa-. Copie de novo em console.aisa.one."}
+    previous, _key_override = _key_override, key
+    result = check_setup()
+    if not result.get("ok") and "recusou" in result.get("problema", ""):
+        _key_override = previous
+        return result
+    fd = os.open(KEY_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(key + "\n")
+    result["salva_em"] = KEY_FILE
+    if result.get("ok"):
+        result["mensagem"] = "Chave salva e aceita pela AIsa. Não precisa configurar de novo."
+    return result
 
 
 def _request(method, path, body=None, headers=None, timeout=60):
@@ -306,6 +331,15 @@ GEO_SCHEMA = {"type": "string", "description": "Localização do usuário simula
 
 TOOLS = [
     {
+        "name": "configurar_chave_aisa",
+        "description": "Cadastra a chave da API AIsa do usuário (começa com sk-aisa-): testa na AIsa e guarda no computador para as próximas conversas. Use quando a chave não estiver configurada ou o usuário quiser trocá-la.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"chave": {"type": "string", "description": "Chave da AIsa colada pelo usuário."}},
+            "required": ["chave"],
+        },
+    },
+    {
         "name": "verificar_configuracao",
         "description": "Verifica se a chave da AIsa está configurada e aceita pela API (gratuito). Use quando o usuário acabou de instalar o plugin ou quando outra ferramenta falhar por autenticação.",
         "inputSchema": {"type": "object", "properties": {}},
@@ -415,6 +449,8 @@ def check_setup():
 
 
 def call_tool(name, args):
+    if name == "configurar_chave_aisa":
+        return save_key(args.get("chave"))
     if name == "verificar_configuracao":
         return check_setup()
     if name == "oxylabs_llm_perguntar":

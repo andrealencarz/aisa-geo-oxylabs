@@ -15,7 +15,7 @@ const crypto = require("crypto");
 const readline = require("readline");
 
 const SERVER_NAME = "aisa-oxylabs";
-const SERVER_VERSION = "0.3.0";
+const SERVER_VERSION = "0.4.0";
 const PROTOCOL_VERSION = "2025-06-18";
 
 const API_BASE = (process.env.AISA_API_BASE || "https://api.aisa.one").replace(/\/+$/, "");
@@ -23,27 +23,48 @@ const LLM_PATH = "/apis/v1/oxylabs/llm";
 const SOURCES = ["chatgpt", "gemini", "perplexity"];
 const FINAL_STATUSES = ["completed", "failed", "cancelled"];
 const KEY_FILE = path.join(os.homedir(), ".aisa_api_key");
+const MISSING_KEY =
+  "Chave da AIsa não configurada. Peça a chave ao usuário (começa com sk-aisa-, criada em console.aisa.one) " +
+  "e chame a ferramenta 'configurar_chave_aisa'.";
+let keyOverride = null;
 
 const SERVER_INSTRUCTIONS =
   "Use estas ferramentas quando o usuário quiser saber o que ChatGPT, Gemini ou Perplexity respondem " +
   "para uma pergunta, ou medir a presença de uma marca/empresa nas respostas de IA (GEO). " +
-  "Na primeira vez da conversa, chame 'verificar_configuracao'. Para relatórios com várias perguntas e " +
+  "Na primeira vez da conversa, chame 'verificar_configuracao'; se a chave da AIsa não estiver configurada, " +
+  "peça a chave ao usuário e chame 'configurar_chave_aisa'. Para relatórios com várias perguntas e " +
   "concorrentes, siga o prompt 'relatorio-geo' e use 'geo_visibilidade'. Antes de lotes grandes, use " +
   "'oxylabs_llm_cotar' e informe o custo ao usuário. Cada pergunta é cobrada na conta AIsa do usuário.";
 
 // --------------------------------------------------------------------------- API AIsa
 
 function apiKey() {
+  if (keyOverride) return keyOverride;
   let key = (process.env.AISA_API_KEY || "").trim();
   if ((!key || key.startsWith("${")) && fs.existsSync(KEY_FILE)) {
     key = fs.readFileSync(KEY_FILE, "utf8").trim();
   }
-  if (!key || key.startsWith("${")) {
-    throw new Error(
-      "Chave da AIsa não configurada. No Claude Desktop, abra Configurações → Extensões → GEO e cole a chave."
-    );
-  }
+  if (!key || key.startsWith("${")) throw new Error(MISSING_KEY);
   return key;
+}
+
+// Testa a chave na AIsa e, se for aceita, guarda em ~/.aisa_api_key (só o usuário lê).
+async function saveKey(key) {
+  key = String(key || "").trim();
+  if (!key.startsWith("sk-")) {
+    return { ok: false, problema: "Isso não parece uma chave da AIsa: ela começa com sk-aisa-. Copie de novo em console.aisa.one." };
+  }
+  const previous = keyOverride;
+  keyOverride = key;
+  const result = await checkSetup();
+  if (!result.ok && String(result.problema).includes("recusou")) {
+    keyOverride = previous;
+    return result;
+  }
+  fs.writeFileSync(KEY_FILE, key + "\n", { encoding: "utf8", mode: 0o600 });
+  result.salva_em = KEY_FILE;
+  if (result.ok) result.mensagem = "Chave salva e aceita pela AIsa. Não precisa configurar de novo.";
+  return result;
 }
 
 async function request(method, urlPath, body, headers = {}) {
@@ -319,6 +340,15 @@ const GEO_SCHEMA = { type: "string", description: "Localização do usuário sim
 
 const TOOLS = [
   {
+    name: "configurar_chave_aisa",
+    description: "Cadastra a chave da API AIsa do usuário (começa com sk-aisa-): testa na AIsa e guarda no computador para as próximas conversas. Use quando a chave não estiver configurada ou o usuário quiser trocá-la.",
+    inputSchema: {
+      type: "object",
+      properties: { chave: { type: "string", description: "Chave da AIsa colada pelo usuário." } },
+      required: ["chave"],
+    },
+  },
+  {
     name: "verificar_configuracao",
     description: "Verifica se a chave da AIsa está configurada e aceita pela API (gratuito). Use na primeira vez da conversa ou quando outra ferramenta falhar por autenticação.",
     inputSchema: { type: "object", properties: {} },
@@ -403,6 +433,8 @@ const TOOLS = [
 
 async function callTool(name, args) {
   switch (name) {
+    case "configurar_chave_aisa":
+      return saveKey(args.chave);
     case "verificar_configuracao":
       return checkSetup();
     case "oxylabs_llm_perguntar": {
