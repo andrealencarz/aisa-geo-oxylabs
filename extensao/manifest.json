@@ -1,0 +1,101 @@
+{
+  "manifest_version": "0.3",
+  "name": "aisa-geo-oxylabs",
+  "display_name": "GEO: o que as IAs respondem",
+  "version": "0.3.0",
+  "description": "Pergunta ao ChatGPT, Gemini e Perplexity como um usuário real e mede quais marcas aparecem nas respostas.",
+  "long_description": "Extensão de GEO (visibilidade em respostas de IA). Faz perguntas ao ChatGPT, Gemini e Perplexity pela interface de cada IA (Oxylabs, via API AIsa), mede em quantas respostas a sua empresa e os concorrentes aparecem, quem é citado primeiro e quais sites as IAs usam como fonte. Use o prompt 'Relatório GEO' para o relatório completo com plano de ação. Cada pergunta é cobrada na sua conta AIsa (cerca de US$ 0,0015).",
+  "author": {
+    "name": "André Alencar",
+    "url": "http://www.youtube.com/@empreendedorserial"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andrealencarz/aisa-geo-oxylabs.git"
+  },
+  "homepage": "https://github.com/andrealencarz/aisa-geo-oxylabs",
+  "support": "https://github.com/andrealencarz/aisa-geo-oxylabs/issues",
+  "license": "MIT",
+  "keywords": [
+    "geo",
+    "seo",
+    "chatgpt",
+    "gemini",
+    "perplexity",
+    "oxylabs",
+    "aisa",
+    "visibilidade em ia"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "AISA_API_KEY": "${user_config.aisa_api_key}",
+        "GEO_OUTPUT_DIR": "${user_config.pasta_resultados}"
+      }
+    }
+  },
+  "user_config": {
+    "aisa_api_key": {
+      "type": "string",
+      "title": "Chave da API AIsa",
+      "description": "Cole sua chave da AIsa (começa com sk-aisa-). Crie em https://console.aisa.one/sign-up",
+      "sensitive": true,
+      "required": true
+    },
+    "pasta_resultados": {
+      "type": "directory",
+      "title": "Pasta dos resultados",
+      "description": "Onde salvar os dados brutos de cada relatório (arquivos geo-*.json).",
+      "default": "${DOCUMENTS}/Relatorios GEO",
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "verificar_configuracao",
+      "description": "Confere se a chave da AIsa está configurada e funcionando (grátis)."
+    },
+    {
+      "name": "geo_visibilidade",
+      "description": "Faz várias perguntas às IAs e mede a presença de cada marca nas respostas."
+    },
+    {
+      "name": "oxylabs_llm_perguntar",
+      "description": "Faz uma pergunta ao ChatGPT, Gemini ou Perplexity e devolve a resposta e as fontes."
+    },
+    {
+      "name": "oxylabs_llm_cotar",
+      "description": "Cota o custo de uma pergunta sem executar (grátis)."
+    },
+    {
+      "name": "oxylabs_llm_job",
+      "description": "Consulta um job pelo id (grátis)."
+    },
+    {
+      "name": "oxylabs_llm_listar",
+      "description": "Lista os jobs recentes (grátis)."
+    },
+    {
+      "name": "oxylabs_llm_cancelar",
+      "description": "Cancela um job em andamento."
+    }
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "prompts_generated": true
+}

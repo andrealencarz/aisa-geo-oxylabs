@@ -13,3 +13,6 @@ __pycache__/
 
 # Sistema
 .DS_Store
+
+# Pacote gerado da extensão (publicado nas Releases)
+dist/
