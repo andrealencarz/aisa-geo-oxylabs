@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 MARKETPLACE = "aisa-geo"
-REPO = "andrealencarz/aisa-geo-oxylabs"
+REPO_URL = "https://github.com/andrealencarz/aisa-geo-oxylabs"
 PLUGIN = "aisa-geo-oxylabs@" + MARKETPLACE
 
 
@@ -46,10 +46,11 @@ def main():
         fail("A chave não parece uma chave da AIsa (ela começa com sk-aisa-). Copie de novo em console.aisa.one.")
 
     step("Atualizando o marketplace %s" % MARKETPLACE)
-    code, out = run(["claude", "plugin", "marketplace", "add", REPO])
+    code, out = run(["claude", "plugin", "marketplace", "update", MARKETPLACE])
     if code != 0:
-        fail("Não consegui adicionar o marketplace.", out)
-    run(["claude", "plugin", "marketplace", "update", MARKETPLACE])
+        code, out = run(["claude", "plugin", "marketplace", "add", REPO_URL])
+        if code != 0:
+            fail("Não consegui adicionar o marketplace.", out)
 
     code, out = run(["claude", "plugin", "list", "--json"])
     if code == 0 and PLUGIN in out:
