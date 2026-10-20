@@ -1,0 +1,15 @@
+# Resultados gerados pelo plugin (podem conter dados de clientes)
+geo-*.json
+relatorio-*.html
+dados-brutos-*.json
+
+# Chaves
+.env
+.aisa_api_key
+
+# Python
+__pycache__/
+*.pyc
+
+# Sistema
+.DS_Store

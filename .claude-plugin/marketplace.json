@@ -1,0 +1,15 @@
+{
+  "name": "aisa-geo",
+  "owner": {
+    "name": "André Alencar",
+    "url": "http://www.youtube.com/@empreendedorserial"
+  },
+  "description": "Ferramentas de GEO (visibilidade em respostas de IA) sobre a API AIsa.",
+  "plugins": [
+    {
+      "name": "aisa-geo-oxylabs",
+      "source": "./",
+      "description": "Pergunta ao ChatGPT, Gemini e Perplexity via Oxylabs (AIsa) e mede quais marcas aparecem nas respostas."
+    }
+  ]
+}
