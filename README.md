@@ -11,85 +11,39 @@ Você informa a empresa e os concorrentes. O plugin faz as perguntas às três I
 - quais sites as IAs usam como fonte (onde vale a pena estar);
 - um plano de ação.
 
-As perguntas são feitas pelo **Oxylabs**, que captura a resposta da interface de cada IA, por meio da API da **AIsa**. Você só precisa de uma chave da AIsa.
+As perguntas são feitas pelo **Oxylabs**, que captura a resposta da interface de cada IA, por meio da API da **AIsa**.
 
 ---
 
-## Do que você precisa
+## Instalar em 3 passos (sem terminal)
 
-| Item | Para quê | Como conseguir |
-|---|---|---|
-| **Claude Code** | Onde o plugin roda | Terminal (`claude`) ou a aba **Code** do app Claude para desktop. Veja [claude.com/claude-code](https://claude.com/claude-code). |
-| **Chave da AIsa** com saldo | Paga as perguntas às IAs | Passo 1 abaixo |
-| **Python 3.9 ou mais novo** | Roda o plugin | Passo 2 abaixo |
-
-> O plugin funciona no Claude Code. No chat comum do claude.ai ele não funciona.
-
----
-
-## Passo 1: criar a chave da AIsa
+### 1. Crie sua chave da AIsa
 
 1. Crie uma conta em [console.aisa.one/sign-up](https://console.aisa.one/sign-up).
-2. Adicione créditos. Um relatório completo costuma custar menos de US$ 0,50 (veja [Quanto custa](#quanto-custa)).
-3. Gere uma chave de API. Ela começa com `sk-aisa-`. Copie e guarde: você vai colar no passo 3.
+2. Adicione créditos. Um relatório completo custa menos de US$ 0,10 (veja [Quanto custa](#quanto-custa)).
+3. Gere uma chave de API. Ela começa com `sk-aisa-`. Deixe copiada.
 
-## Passo 2: conferir o Python
+### 2. Peça ao Claude para instalar
 
-Abra o Terminal (no Windows, o **PowerShell**) e rode:
-
-```bash
-python3 --version
-```
-
-Se aparecer `Python 3.9` ou um número maior, está pronto. Se der erro:
-
-- **Mac:** rode `xcode-select --install` e aceite a instalação. Depois teste de novo.
-- **Windows:** instale o **Python 3** pela **Microsoft Store**. Essa versão cria o comando `python3`; o instalador do site python.org não cria.
-- **Linux:** `sudo apt install python3` (Ubuntu/Debian).
-
-## Passo 3: instalar o plugin
-
-Abra o Claude Code no terminal e digite os dois comandos, um de cada vez:
+Abra o **app Claude para desktop**, entre na aba **Code** e comece uma sessão. Também funciona no Claude Code pelo terminal. Cole a mensagem abaixo e envie:
 
 ```
-/plugin marketplace add andrealencarz/aisa-geo-oxylabs
+Instale este plugin para mim: https://github.com/andrealencarz/aisa-geo-oxylabs
 ```
 
-```
-/plugin install aisa-geo-oxylabs@aisa-geo
-```
+O Claude lê as instruções do repositório e faz o resto. Quando ele pedir, cole a sua chave da AIsa. Se pedir permissão para rodar comandos, aprove.
 
-O Claude Code vai pedir a **Chave da API AIsa**. Cole a chave do passo 1 e confirme. Depois **feche e abra o Claude Code de novo** para o plugin carregar.
+### 3. Abra uma sessão nova e teste
 
-<details>
-<summary><b>Prefere instalar sem abrir o Claude Code?</b> (comandos de terminal)</summary>
-
-```bash
-claude plugin marketplace add andrealencarz/aisa-geo-oxylabs
-```
-
-```bash
-claude plugin install aisa-geo-oxylabs@aisa-geo --config aisa_api_key=sk-aisa-SUA-CHAVE
-```
-
-Troque `sk-aisa-SUA-CHAVE` pela sua chave. Se instalar sem o `--config`, a chave fica pendente: configure depois pela opção A de "A chave não foi pedida" em [Problemas comuns](#problemas-comuns).
-</details>
-
-<details>
-<summary><b>Usa o app Claude para desktop (aba Code)?</b></summary>
-
-Rode os comandos de terminal acima uma vez, no Terminal do seu computador. Depois abra uma sessão nova na aba **Code**: o plugin já estará lá.
-</details>
-
-## Passo 4: testar
-
-Numa conversa nova do Claude Code, escreva:
+Quando o Claude disser que terminou, **comece uma sessão nova**: o plugin só carrega em sessões novas. Nela, escreva:
 
 ```
 verifique a configuração do plugin GEO
 ```
 
-A resposta esperada é **"Tudo certo: a chave foi aceita e o Oxylabs LLM está acessível."** Se aparecer outro aviso, veja [Problemas comuns](#problemas-comuns).
+A resposta esperada é **"Tudo certo: a chave foi aceita e o Oxylabs LLM está acessível."**
+
+> O plugin funciona no Claude Code: aba **Code** do app para desktop ou terminal. No chat comum do claude.ai ele não funciona.
 
 ---
 
@@ -106,7 +60,7 @@ O Claude pergunta o que faltar: empresa, site, concorrentes, cidade. Depois:
 1. sugere de 10 a 20 perguntas que um cliente faria e mostra a lista para você aprovar;
 2. calcula quanto vai custar e espera o seu ok;
 3. faz as perguntas às três IAs ao mesmo tempo (leva de 1 a 3 minutos);
-4. entrega o relatório em HTML e salva os dados brutos num arquivo `geo-AAAAMMDD-HHMMSS.json` na pasta onde você abriu o Claude Code.
+4. entrega o relatório em HTML e salva os dados brutos num arquivo `geo-AAAAMMDD-HHMMSS.json` na pasta da sessão.
 
 Se preferir, passe tudo de uma vez:
 
@@ -138,56 +92,92 @@ Consultar a configuração, cotar e acompanhar jobs é gratuito.
 
 ## Problemas comuns
 
-**"Chave da AIsa não configurada"**
-A chave não chegou ao plugin. Use uma das opções abaixo.
+Na maioria dos casos, basta pedir ao Claude:
 
-**A chave não foi pedida na instalação**
-- **Opção A:** no Claude Code, digite o comando abaixo, cole a chave quando ele pedir e reinicie o Claude Code.
-  ```
-  /plugin configure aisa-geo-oxylabs@aisa-geo
-  ```
-- **Opção B:** salve a chave num arquivo que o plugin lê sozinho. No Mac ou Linux, rode no terminal (troque pela sua chave):
+```
+o plugin GEO não está funcionando, siga a seção de problemas do https://github.com/andrealencarz/aisa-geo-oxylabs e conserte
+```
+
+| Aviso | O que significa | Como resolver |
+|---|---|---|
+| "Chave da AIsa não configurada" | A chave não chegou ao plugin | Peça ao Claude: "troque a chave do plugin GEO" e cole a chave |
+| "A AIsa recusou a chave" | Chave copiada pela metade ou apagada | Gere outra em [console.aisa.one](https://console.aisa.one) e peça ao Claude para trocar |
+| "Chave válida, mas sem saldo" | Faltam créditos | Adicione créditos em [console.aisa.one](https://console.aisa.one) |
+| O Claude não acha as ferramentas do plugin | A sessão começou antes da instalação, ou falta Python | Abra uma sessão nova. Se continuar, peça ao Claude para conferir o Python |
+| Algumas respostas vieram vazias | Uma IA demorou mais que o normal | Rode de novo só as perguntas que faltaram |
+
+---
+
+## Instruções de instalação para o Claude
+
+> Esta seção é para o assistente que vai instalar o plugin a pedido do usuário. Siga os passos na ordem, explique cada um em linguagem simples e não mostre a chave do usuário de volta no chat.
+
+**1. Confira o Python 3.9+.** Rode `python3 --version`.
+- Se a versão for 3.9 ou maior, siga para o passo 2.
+- Mac sem Python: rode `xcode-select --install`, peça ao usuário para clicar em **Instalar** na janela que abrir e espere terminar.
+- Windows sem `python3`: peça ao usuário para instalar o **Python 3.12** pela **Microsoft Store** (essa versão cria o comando `python3`) e confirme com `python3 --version`.
+- Linux: `sudo apt install -y python3` (peça a senha ao usuário só se o sistema exigir).
+
+**2. Peça a chave da AIsa** (começa com `sk-aisa-`). Se o usuário não tiver, mande-o para https://console.aisa.one/sign-up e espere.
+
+**3. Instale ou reinstale.** Rode `claude plugin list`.
+- Se `aisa-geo-oxylabs@aisa-geo` **não** aparecer:
   ```bash
-  echo "sk-aisa-SUA-CHAVE" > ~/.aisa_api_key
+  claude plugin marketplace add andrealencarz/aisa-geo-oxylabs
+  claude plugin install aisa-geo-oxylabs@aisa-geo --config aisa_api_key=CHAVE_DO_USUARIO
   ```
-  No Windows (PowerShell):
-  ```powershell
-  "sk-aisa-SUA-CHAVE" | Out-File -Encoding ascii $HOME\.aisa_api_key
+- Se já aparecer (atualizar ou trocar a chave), a chave só é gravada numa instalação nova:
+  ```bash
+  claude plugin marketplace update aisa-geo
+  claude plugin uninstall aisa-geo-oxylabs@aisa-geo
+  claude plugin install aisa-geo-oxylabs@aisa-geo --config aisa_api_key=CHAVE_DO_USUARIO
   ```
-  Depois reinicie o Claude Code.
+- A instalação deu certo se terminar com `Successfully installed` **sem** o aviso `userConfig option not yet set`. Se o aviso aparecer, desinstale e instale de novo com o `--config`.
 
-**"A AIsa recusou a chave"**
-A chave foi copiada pela metade ou foi apagada no painel. Gere outra em [console.aisa.one](https://console.aisa.one) e configure de novo.
+**4. Teste o servidor** sem gastar créditos:
+```bash
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"verificar_configuracao","arguments":{}}}' | AISA_API_KEY=CHAVE_DO_USUARIO python3 "$(find ~/.claude/plugins/cache -path '*aisa-geo-oxylabs*' -name mcp_server.py | sort | tail -1)"
+```
+A resposta deve conter `"ok": true`. Se vier `"ok": false`, explique o campo `problema` ao usuário.
 
-**"Chave válida, mas sem saldo"**
-Adicione créditos em [console.aisa.one](https://console.aisa.one).
+**5. Finalize.** Diga ao usuário que a instalação terminou, que ele precisa **começar uma sessão nova** para o plugin carregar, e que lá pode escrever `verifique a configuração do plugin GEO` e depois `/relatorio-geo`.
 
-**O Claude não encontra as ferramentas do plugin**
-- Reinicie o Claude Code depois de instalar.
-- Rode `/mcp` e veja se o servidor **aisa-oxylabs** aparece como conectado. Se aparecer com falha, quase sempre o problema é o Python: refaça o [passo 2](#passo-2-conferir-o-python).
-
-**Algumas respostas voltaram vazias ou com timeout**
-Às vezes uma IA demora mais que o normal. O relatório lista as falhas; rode de novo só as perguntas que faltaram.
+**Problemas depois de instalado:** se a sessão nova não mostrar as ferramentas `aisa-oxylabs`, refaça o passo 1 (Python) e o passo 4. Para trocar a chave, repita o passo 3 no caminho "se já aparecer".
 
 ---
 
-## Atualizar e desinstalar
+<details>
+<summary><b>Instalação manual (para quem usa terminal)</b></summary>
 
-Atualizar para a versão mais nova:
-
-```
-/plugin marketplace update aisa-geo
-```
-
-Desinstalar:
+Dentro do Claude Code:
 
 ```
-/plugin uninstall aisa-geo-oxylabs@aisa-geo
+/plugin marketplace add andrealencarz/aisa-geo-oxylabs
 ```
 
----
+```
+/plugin install aisa-geo-oxylabs@aisa-geo
+```
 
-## Como funciona
+O Claude Code pede a chave durante a instalação. Para trocar a chave depois: `/plugin configure aisa-geo-oxylabs@aisa-geo`.
+
+Ou direto no terminal, já com a chave:
+
+```bash
+claude plugin marketplace add andrealencarz/aisa-geo-oxylabs
+```
+
+```bash
+claude plugin install aisa-geo-oxylabs@aisa-geo --config aisa_api_key=sk-aisa-SUA-CHAVE
+```
+
+Para atualizar: `claude plugin marketplace update aisa-geo` e depois `claude plugin update aisa-geo-oxylabs@aisa-geo`. Para remover: `claude plugin uninstall aisa-geo-oxylabs@aisa-geo`.
+
+Se preferir não guardar a chave nas configurações do Claude Code, salve-a em `~/.aisa_api_key`; o plugin lê esse arquivo quando a configuração está vazia.
+</details>
+
+<details>
+<summary><b>Como funciona por dentro</b></summary>
 
 ```
 Você ──► Claude Code ──► skill /relatorio-geo (roteiro do relatório)
@@ -215,18 +205,7 @@ Arquivos do repositório:
 mcp_server.py                     servidor MCP em Python, sem dependências
 skills/relatorio-geo/SKILL.md     roteiro que o Claude segue para montar o relatório
 ```
-
-### Testar o servidor sem o Claude
-
-```bash
-AISA_API_KEY=sk-aisa-SUA-CHAVE python3 mcp_server.py
-```
-
-Depois cole uma linha JSON-RPC e tecle Enter:
-
-```json
-{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"verificar_configuracao","arguments":{}}}
-```
+</details>
 
 ---
 
@@ -235,7 +214,7 @@ Depois cole uma linha JSON-RPC e tecle Enter:
 - **Respostas de IA mudam a cada vez.** Para acompanhar a evolução, repita as mesmas perguntas todo mês e guarde os arquivos JSON.
 - **Visibilidade não é qualidade.** O relatório mostra quem aparece, não quem presta o melhor serviço.
 - **Áreas reguladas** (saúde, advocacia, contabilidade): confira as regras de publicidade do conselho profissional antes de publicar conteúdo do tipo "o melhor de…".
-- **Os arquivos `geo-*.json` podem ter dados de clientes.** O `.gitignore` deste repositório já evita que eles subam para o GitHub.
+- **Os arquivos `geo-*.json` podem ter dados de clientes.** Não publique esses arquivos.
 
 ## Licença
 
