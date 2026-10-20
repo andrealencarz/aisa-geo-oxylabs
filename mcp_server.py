@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 SERVER_NAME = "aisa-oxylabs"
-SERVER_VERSION = "0.5.0"
+SERVER_VERSION = "0.5.1"
 PROTOCOL_VERSION = "2025-06-18"
 
 API_BASE = os.environ.get("AISA_API_BASE", "https://api.aisa.one").rstrip("/")
